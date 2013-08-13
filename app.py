@@ -1,13 +1,15 @@
-from flask import Flask, render_template, request, send_file, abort, redirect, make_response, url_for, jsonify
+from flask import Flask, render_template, request, send_file, abort, redirect, make_response, url_for, jsonify, flash
 from pprint import pprint
 from modules.models import *
 from modules.forms import *
 from modules.custom_jinja_filters import *
+import balanced
 
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py', silent=False)
 app.jinja_env.filters['format_currency'] = format_currency
+balanced.configure(app.config['BALANCED_API_KEY'])
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -51,9 +53,24 @@ def pay(order_id):
 
     if request.method == 'POST':
         #charge the customer, mark the order as paid
-        order.paid = True
-        db_session.commit()
-        return redirect(url_for('receipt', order_id=order.id))
+        #need to create an account to attach the order to
+        try:
+            account = balanced.Marketplace.my_marketplace.create_buyer(
+                email_address=None,
+                card_uri=request.form['balancedCreditCardURI'],
+                name=order.name,
+            ).debit(
+                amount=int(order.price)*100,
+                description=order.item + " from " + order.username,
+            )
+
+            order.paid = True
+            db_session.commit()
+            return redirect(url_for('receipt', order_id=order.id))
+
+        except balanced.exc.HTTPError as ex:
+            flash('Transaction failed, %s' % ex.message, 'error')
+            print ex
 
     return render_template('pay.html', order=order)
 
@@ -61,6 +78,9 @@ def pay(order_id):
 @app.route("/receipt/<int:order_id>")
 def receipt(order_id):
     order = Order.query.get(order_id)
+    if order.paid is not True:
+        flash('Order is not yet paid', 'error')
+        return redirect(url_for('pay', order_id=order.id))
     return render_template('receipt.html', order=order)
 
 

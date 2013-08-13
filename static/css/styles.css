@@ -4743,3 +4743,10 @@ code {
 .receipt-details tr:first-child > td {
   border-top: 0;
 }
+.alert {
+  position: relative;
+  z-index: 1041;
+}
+.alert h3 {
+  margin: 15px 0;
+}

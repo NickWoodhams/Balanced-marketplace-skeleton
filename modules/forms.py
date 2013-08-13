@@ -37,9 +37,9 @@ class createAccountForm(Form):
     username = TextField('Username', [Required, validators.Length(min=6, max=20), validators.Regexp(r'^[a-zA-Z0-9_]*$')])
     email = TextField('Email:',
                       [validators.Email(),
-                      Required])
+                      Required()])
     password = PasswordField('Password:',
-                             [Required,
+                             [Required(),
                              validators.Length(min=6, max=120)])
 
     #this is a custom validator, meaning that every time "validate" method is run on the form it will also run this
@@ -65,5 +65,6 @@ class orderDetailsForm(Form):
     zip_code = TextField('Zip Code', [Required()])
     country = SelectField('Country', [Required()], choices=countries)
     username = HiddenField(validators=[Required()])
+    email = TextField('Email:', [validators.Email(), Required()])
     item = HiddenField(validators=[Required()])
     price = HiddenField(validators=[Required()])

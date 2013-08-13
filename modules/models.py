@@ -32,6 +32,7 @@ class Order(Base):
     state = Column(String(120))
     zip_code = Column(String(120))
     country = Column(String(120))
+    email = Column(String(120))
     username = Column(String(120))
     item = Column(String(120))
     price = Column(Numeric(precision=10, scale=2))
